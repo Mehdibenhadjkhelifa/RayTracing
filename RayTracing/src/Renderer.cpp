@@ -16,18 +16,18 @@ void Renderer::OnResize(uint32_t width, uint32_t height) {
 
 }
 
-void Renderer::Render() {
+void Renderer::Render(glm::vec3 sphereOrigin) {
 	for (uint32_t y = 0; y < m_FinalImage->GetHeight();y++) {
 		for (uint32_t x = 0; x < m_FinalImage->GetWidth(); x++) {
 			glm::vec2 coord = { (float)x / (float)m_FinalImage->GetWidth(),(float)y / (float)m_FinalImage->GetHeight() };
 			coord = coord * 2.0f - 1.0f;//remap from 0.0 -> 1.1 to -1.-1 -> 1.1
-			m_ImageData[x + y * m_FinalImage->GetWidth()] = PerPixel(coord);
+			m_ImageData[x + y * m_FinalImage->GetWidth()] = PerPixel(coord,sphereOrigin);
 		}
 	}
 	m_FinalImage->SetData(m_ImageData);
 }
 
-uint32_t Renderer::PerPixel(glm::vec2 coord)
+uint32_t Renderer::PerPixel(glm::vec2 coord,glm::vec3 sphereOrigin)
 {
 
 	uint8_t r = (uint8_t)(coord.x * 255.0f);
@@ -40,10 +40,12 @@ uint32_t Renderer::PerPixel(glm::vec2 coord)
 	// b = ray direction 
 	// r = sphere radius
 	// t = hit distance
+	//float a = glm::dot(rayDirection, rayDirection);
+	//float b = 2.0f * glm::dot(rayOrigin, rayDirection);
+	//float c = glm::dot(rayOrigin, rayOrigin) - radius * radius;
 	float a = glm::dot(rayDirection, rayDirection);
-	float b = 2.0f * glm::dot(rayOrigin, rayDirection);
-	float c = glm::dot(rayOrigin, rayOrigin) - radius;
-
+	float b = 2.0f * (glm::dot(rayOrigin, rayDirection) - glm::dot(sphereOrigin, rayDirection));
+	float c = (-2.0f * (glm::dot(sphereOrigin, rayOrigin))) + glm::dot(sphereOrigin, sphereOrigin) - radius * radius;
 	float discremenant = b * b - (4.0f * a *  c);
 	if (discremenant >= 0.0f)
 		return 0xffff00ff;
