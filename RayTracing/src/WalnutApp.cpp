@@ -14,9 +14,9 @@ public:
 		static float sphere_y = 0.0f;
 		static float sphere_z = 0.0f;
 		ImGui::Begin("Settings");
-		ImGui::SliderFloat("sphere_x", &sphere_x, -5.0f, 5.0f);
-		ImGui::SliderFloat("sphere_y", &sphere_y, -5.0f, 5.0f);
-		ImGui::SliderFloat("sphere_z", &sphere_z, -5.0f, 5.0f);
+		ImGui::SliderFloat("sphere_x", &sphere_x, -50.0f, 50.0f);
+		ImGui::SliderFloat("sphere_y", &sphere_y, -50.0f, 50.0f);
+		ImGui::SliderFloat("sphere_z", &sphere_z, -50.0f, 50.0f);
 		ImGui::Text("Last render : %.3fms", m_LastRenderTime);
 		if (ImGui::Button("Render"))
 			Render(glm::vec3(sphere_x, sphere_y, sphere_z));
