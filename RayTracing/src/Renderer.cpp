@@ -16,20 +16,20 @@ void Renderer::OnResize(uint32_t width, uint32_t height) {
 
 }
 
-void Renderer::Render(glm::vec3 sphereOrigin) {
+void Renderer::Render(glm::vec3 sphereOrigin,glm::vec3 lightDir) {
 	for (uint32_t y = 0; y < m_FinalImage->GetHeight();y++) {
 		for (uint32_t x = 0; x < m_FinalImage->GetWidth(); x++) {
 			glm::vec2 coord = { (float)x / (float)m_FinalImage->GetWidth(),(float)y / (float)m_FinalImage->GetHeight() };
 			coord = coord * 2.0f - 1.0f;//remap from 0.0 -> 1.1 to -1.-1 -> 1.1
-			m_ImageData[x + y * m_FinalImage->GetWidth()] = PerPixel(coord, sphereOrigin, 0);
+			m_ImageData[x + y * m_FinalImage->GetWidth()] = PerPixel(coord, sphereOrigin,lightDir, 0);
 			x++;
-			m_ImageData[x + y * m_FinalImage->GetWidth()] = PerPixel(coord, sphereOrigin,1);
+			m_ImageData[x + y * m_FinalImage->GetWidth()] = PerPixel(coord, sphereOrigin,lightDir,1);
 		}
 	}
 	m_FinalImage->SetData(m_ImageData);
 }
 
-uint32_t Renderer::PerPixel(glm::vec2 coord,glm::vec3 sphereOrigin,uint32_t i)
+uint32_t Renderer::PerPixel(glm::vec2 coord,glm::vec3 sphereOrigin,glm::vec3 lightDir,uint32_t i)
 {
 
 	uint8_t r = (uint8_t)(coord.x * 255.0f);
@@ -55,11 +55,12 @@ uint32_t Renderer::PerPixel(glm::vec2 coord,glm::vec3 sphereOrigin,uint32_t i)
 		glm::vec3 normal = intersec - sphereOrigin;
 		//normal = glm::normalize(normal);
 		normal = (normal * 0.5f) + 0.5f;
-		uint32_t color = 0xff000000;
+		float light = glm::max(glm::dot(normal, lightDir), 0.0f);
+		uint32_t color;
 		color |= (uint8_t)normal.x * 255 << 16;
 		color |= (uint8_t)normal.z * 255 << 8;
 		color |= (uint8_t)normal.y * 255;
-		return color;
+		return (color * ((uint32_t)light)) | 0xff000000;
 		
 	}
 

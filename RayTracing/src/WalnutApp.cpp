@@ -13,13 +13,19 @@ public:
 		static float sphere_x = 0.0f;
 		static float sphere_y = 0.0f;
 		static float sphere_z = 0.0f;
+		static float light_x = 0.0f;
+		static float light_y = 3.0f;
+		static float light_z = 3.0f;
 		ImGui::Begin("Settings");
 		ImGui::SliderFloat("sphere_x", &sphere_x, -50.0f, 50.0f);
 		ImGui::SliderFloat("sphere_y", &sphere_y, -50.0f, 50.0f);
 		ImGui::SliderFloat("sphere_z", &sphere_z, -50.0f, 50.0f);
+		ImGui::SliderFloat("light_x", &light_x, -50.0f, 50.0f);
+		ImGui::SliderFloat("light_y", &light_y, -50.0f, 50.0f);
+		ImGui::SliderFloat("light_z", &light_z, -50.0f, 50.0f);
 		ImGui::Text("Last render : %.3fms", m_LastRenderTime);
 		if (ImGui::Button("Render"))
-			Render(glm::vec3(sphere_x, sphere_y, sphere_z));
+			Render(glm::vec3(sphere_x, sphere_y, sphere_z),glm::vec3(light_x,light_y,light_z));
 		ImGui::End();
 
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
@@ -32,13 +38,13 @@ public:
 				ImVec2(0, 1),ImVec2(1,0));
 		ImGui::End();
 		ImGui::PopStyleVar();
-		Render(glm::vec3(sphere_x,sphere_y,sphere_z));
+		Render(glm::vec3(sphere_x,sphere_y,sphere_z), glm::vec3(light_x, light_y, light_z));
 	}
 
-	void Render(glm::vec3 sphere_origin){
+	void Render(glm::vec3 sphere_origin,glm::vec3 lightDir){
 		Timer timer;
 		m_Renderer.OnResize(m_ViewportWidth,m_ViewportHeight);
-		m_Renderer.Render(sphere_origin);
+		m_Renderer.Render(sphere_origin,lightDir);
 
 		m_LastRenderTime = timer.ElapsedMillis();
 	}
