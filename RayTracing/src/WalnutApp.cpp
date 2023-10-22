@@ -13,38 +13,44 @@ public:
 		static float sphere_x = 0.0f;
 		static float sphere_y = 0.0f;
 		static float sphere_z = 0.0f;
-		static float light_x = 0.0f;
-		static float light_y = 3.0f;
-		static float light_z = 3.0f;
+		static float light_x = -1.0f;
+		static float light_y = -1.0f;
+		static float light_z = -1.0f;
+		static float red = 1.0f;
+		static float green = 0.0f;
+		static float blue = 1.0f;
 		ImGui::Begin("Settings");
-		ImGui::SliderFloat("sphere_x", &sphere_x, -50.0f, 50.0f);
-		ImGui::SliderFloat("sphere_y", &sphere_y, -50.0f, 50.0f);
-		ImGui::SliderFloat("sphere_z", &sphere_z, -50.0f, 50.0f);
-		ImGui::SliderFloat("light_x", &light_x, -50.0f, 50.0f);
-		ImGui::SliderFloat("light_y", &light_y, -50.0f, 50.0f);
-		ImGui::SliderFloat("light_z", &light_z, -50.0f, 50.0f);
+		ImGui::SliderFloat("sphere_x", &sphere_x, -5.0f, 5.0f);
+		ImGui::SliderFloat("sphere_y", &sphere_y, -5.0f, 5.0f);
+		ImGui::SliderFloat("sphere_z", &sphere_z, -5.0f, 5.0f);
+		ImGui::SliderFloat("light_x", &light_x, -5.0f, 5.0f);
+		ImGui::SliderFloat("light_y", &light_y, -5.0f, 5.0f);
+		ImGui::SliderFloat("light_z", &light_z, -5.0f, 5.0f);
+		ImGui::SliderFloat("red", &red, 0.0f, 1.0f);
+		ImGui::SliderFloat("green", &green, 0.0f, 1.0f);
+		ImGui::SliderFloat("blue", &blue, 0.0f, 1.0f);
 		ImGui::Text("Last render : %.3fms", m_LastRenderTime);
 		if (ImGui::Button("Render"))
-			Render(glm::vec3(sphere_x, sphere_y, sphere_z),glm::vec3(light_x,light_y,light_z));
+			Render(glm::vec3(sphere_x, sphere_y, sphere_z),glm::vec3(light_x,light_y,light_z),glm::vec3(red,green,blue));
 		ImGui::End();
 
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 		ImGui::Begin("ViewPort");
-		m_ViewportWidth = ImGui::GetContentRegionAvail().x;
-		m_ViewportHeight = ImGui::GetContentRegionAvail().y;
+		m_ViewportWidth =(uint32_t)ImGui::GetContentRegionAvail().x;
+		m_ViewportHeight =(uint32_t)ImGui::GetContentRegionAvail().y;
 		auto image = m_Renderer.GetFinalImage();
 		if (image)
-			ImGui::Image(image->GetDescriptorSet(), { (float)image->GetWidth() ,(float)image->GetHeight() },
-				ImVec2(0, 1),ImVec2(1,0));
+			ImGui::Image(image->GetDescriptorSet(), { (float)image->GetWidth() ,(float)image->GetHeight() }
+		,ImVec2(0, 1), ImVec2(1, 0));
 		ImGui::End();
 		ImGui::PopStyleVar();
-		Render(glm::vec3(sphere_x,sphere_y,sphere_z), glm::vec3(light_x, light_y, light_z));
+		Render(glm::vec3(sphere_x,sphere_y,sphere_z), glm::vec3(light_x, light_y, light_z), glm::vec3(red, green, blue));
 	}
 
-	void Render(glm::vec3 sphere_origin,glm::vec3 lightDir){
+	void Render(glm::vec3 sphere_origin,glm::vec3 lightDir, glm::vec3 sphereColor){
 		Timer timer;
 		m_Renderer.OnResize(m_ViewportWidth,m_ViewportHeight);
-		m_Renderer.Render(sphere_origin,lightDir);
+		m_Renderer.Render(sphere_origin,lightDir,sphereColor);
 
 		m_LastRenderTime = timer.ElapsedMillis();
 	}
