@@ -26,12 +26,12 @@ void Renderer::OnResize(uint32_t width, uint32_t height) {
 
 }
 
-void Renderer::Render() {
+void Renderer::Render(glm::vec3 ray_origin,glm::vec3 sphere_origin,glm::vec3 light_direction) {
 	for (uint32_t y = 0; y < m_FinalImage->GetHeight();y++) {
 		for (uint32_t x = 0; x < m_FinalImage->GetWidth(); x++) {
 			glm::vec2 coord = { (float)x / (float)m_FinalImage->GetWidth(),(float)y / (float)m_FinalImage->GetHeight() };
 			coord = coord * 2.0f -1.0f;//remap from 0.0 -> 1.1 to -1.-1 -> 1.1
-			glm::vec4 color = PerPixel(coord);
+			glm::vec4 color = PerPixel(coord,ray_origin,sphere_origin,light_direction);
 			color = glm::clamp(color, glm::vec4(0.0f), glm::vec4(1.0f));
 			m_ImageData[x + y * m_FinalImage->GetWidth()] = Utils::ConvertToRGBA(color);
 		}
@@ -39,37 +39,39 @@ void Renderer::Render() {
 	m_FinalImage->SetData(m_ImageData);
 }
 
-glm::vec4 Renderer::PerPixel(glm::vec2 coord)
+glm::vec4 Renderer::PerPixel(glm::vec2 coord,glm::vec3 ray_origin,glm::vec3 sphere_origin,glm::vec3 light_direction)
 {
 
-	glm::vec3 rayOrigin(0.0f,0.0f,1.0f);
+	glm::vec3 rayOrigin = ray_origin;
 	glm::vec3 rayDirection(coord.x, coord.y, -1.0f);
 	//glm::vec3 sphereOrigin(0.0f, 2.0f, -3.0f);
-	float radius = 0.5f;
+	glm::vec3 sphereOrigin = sphere_origin;
+	float radius = 1.f;
 	// (bx^2 + by^2)t^2 + 2((axbx + ayby))t + (ax^2 + ay^2 - r^2) = 0
 	// a = ray origin
 	// b = ray direction 
 	// r = sphere radius
 	// t = hit distance
-	float a = glm::dot(rayDirection, rayDirection);
-	float b = 2.0f * glm::dot(rayOrigin, rayDirection);
-	float c = glm::dot(rayOrigin, rayOrigin) - radius * radius;
 	//float a = glm::dot(rayDirection, rayDirection);
-	//float b = 2.0f * (glm::dot(rayOrigin, rayDirection) - glm::dot(sphereOrigin, rayDirection));
-	//float c = (-2.0f * (glm::dot(sphereOrigin, rayOrigin))) + glm::dot(sphereOrigin, sphereOrigin) - radius * radius;
+	//float b = 2.0f * glm::dot(rayOrigin, rayDirection);
+	//float c = glm::dot(rayOrigin, rayOrigin) - radius * radius;
+    float a = glm::dot(rayDirection, rayDirection);
+	float b = 2.0f * (glm::dot(rayOrigin, rayDirection) - glm::dot(sphereOrigin, rayDirection));
+	float c = glm::dot(rayOrigin,rayOrigin) + (-2.0f * (glm::dot(sphereOrigin, rayOrigin))) + glm::dot(sphereOrigin, sphereOrigin) - radius * radius;
 	float discremenant = b * b - 4.0f * a *  c;
 	if (discremenant < 0.0f)
 		return glm::vec4(0,0,0,1);
 
-	//float t0 = (-b + glm::sqrt(discremenant)) / (2.0f * a);
-	float ClosestT = (-b - glm::sqrt(discremenant)) / (2.0f * a);
+	float closest_t = (-b - glm::sqrt(discremenant)) / (2.0f * a);
 
-	//glm::vec3 hitPoint = rayOrigin + (rayDirection * t0);
-	glm::vec3 hitPoint = rayOrigin + rayDirection * ClosestT;
-	glm::vec3 normal = glm::normalize(hitPoint);
-	glm::vec3 LightDir = glm::normalize(glm::vec3(-1, -1, -1));
+	glm::vec3 hitPoint = rayOrigin + rayDirection * closest_t;
+	glm::vec3 normal = glm::normalize(hitPoint- sphereOrigin);
+    glm::vec3 LightDir = glm::normalize(glm::vec3(-1, -1, -1));
+    //glm::vec3 LightDir = glm::normalize(light_direction);
 
 	glm::vec3 sphereColor(1, 0, 1);
+    //normal * 0.5f + 0.5 to map normal from -1/1 -> 0/1 
+    //normal is representing the x , y ,z axis as color values here
 	sphereColor = (normal * 0.5f + 0.5f) * (glm::max(glm::dot(normal,-LightDir),0.1f));
 	return glm::vec4(sphereColor,1.0f);
 }
