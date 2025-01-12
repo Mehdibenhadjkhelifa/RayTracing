@@ -58,7 +58,7 @@ Renderer::HitPayload Renderer::TraceRay(const Ray& ray)
             continue;
 
         float closest_t = (-b - glm::sqrt(discremenant)) / (2.0f * a);
-        if(closest_t < hitDistance){
+        if(closest_t > 0.0f && closest_t < hitDistance){
             hitDistance = closest_t;
             closestSphere = static_cast<int>(i);
         }
@@ -73,18 +73,31 @@ glm::vec4 Renderer::PerPixel(uint32_t x,uint32_t y){
     ray.Origin = m_ActiveCamera->GetPosition();
     ray.Direction = m_ActiveCamera->GetRayDirections()[x + y * m_FinalImage->GetWidth()];
 
-    Renderer::HitPayload payload = TraceRay(ray);
-    if(payload.HitDistance < 0.0f)
-        return glm::vec4(0.0f,0.0f,0.0f,1.0f);
+    glm::vec3 color(0.0f);
+    size_t bounces = 2;
+    float multiplier = 1.0f;
+    for(size_t i = 0; i < bounces; i++){
+        Renderer::HitPayload payload = TraceRay(ray);
+        if(payload.HitDistance < 0.0f){
+            glm::vec3 skyColor = glm::vec3(0.0f,0.0f,0.0f);
+            color += skyColor * multiplier;
+            break;
+        }
 
-    glm::vec3 LightDir = glm::normalize(glm::vec3(-1, -1, -1));
-    float lightIntensity =glm::max(glm::dot(payload.WorldNormal,-LightDir),0.1f);
+        glm::vec3 LightDir = glm::normalize(glm::vec3(-1, -1, -1));
+        float lightIntensity =glm::max(glm::dot(payload.WorldNormal,-LightDir),0.1f);
 
-    const Sphere& sphere = m_ActiveScene->Spheres[(size_t)payload.ObjectIndex];
-    glm::vec3 sphereColor = sphere.Albedo;
+        const Sphere& sphere = m_ActiveScene->Spheres[(size_t)payload.ObjectIndex];
+        glm::vec3 sphereColor = sphere.Albedo;
 
-    sphereColor *= lightIntensity;
-    return glm::vec4(sphereColor,1.0f);
+        sphereColor *= lightIntensity;
+        color += sphereColor * multiplier;
+        multiplier *= 0.7f;
+        ray.Origin = payload.WorldPosition + payload.WorldNormal * 0.0001f;
+        ray.Direction = glm::reflect(ray.Direction,payload.WorldNormal);
+    }
+
+    return glm::vec4(color,1.0f);
 }
 Renderer::HitPayload Renderer::ClosestHit(const Ray& ray, float hitDistance, int objectIndex){
     Renderer::HitPayload payload;
