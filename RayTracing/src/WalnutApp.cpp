@@ -37,7 +37,8 @@ public:
             }
         }
     virtual void OnUpdate(float ts) override{
-        m_Camera.OnUpdate(ts);
+		if (m_Camera.OnUpdate(ts))
+			m_Renderer.ResetFrameIndex();
     
     }
 	virtual void OnUIRender() override
@@ -50,6 +51,10 @@ public:
         ImGui::SliderFloat3("Light Direction",(float*)&_light_direction,-5.000,5.000);
 		if (ImGui::Button("Render"))
 			Render();
+		ImGui::Checkbox("Accumulate",&m_Renderer.GetSettings().Accumulate);
+		if (ImGui::Button("Reset"))
+			m_Renderer.ResetFrameIndex();
+
 		ImGui::End();
         ImGui::Begin("Scene");
         for(size_t i = 0; i < m_Scene.Spheres.size(); i++){
