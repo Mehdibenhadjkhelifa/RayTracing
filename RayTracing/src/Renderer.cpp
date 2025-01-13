@@ -1,5 +1,6 @@
 #include "Renderer.h"
 #include "Walnut/Random.h"
+#include "glm/geometric.hpp"
 #include <limits>
 
 namespace Utils {
@@ -74,9 +75,9 @@ glm::vec4 Renderer::PerPixel(uint32_t x,uint32_t y){
     ray.Direction = m_ActiveCamera->GetRayDirections()[x + y * m_FinalImage->GetWidth()];
 
     glm::vec3 color(0.0f);
-    size_t bounces = 2;
+    int bounces = 2;
     float multiplier = 1.0f;
-    for(size_t i = 0; i < bounces; i++){
+    for(int i = 0; i < bounces; i++){
         Renderer::HitPayload payload = TraceRay(ray);
         if(payload.HitDistance < 0.0f){
             glm::vec3 skyColor = glm::vec3(0.0f,0.0f,0.0f);
@@ -85,23 +86,25 @@ glm::vec4 Renderer::PerPixel(uint32_t x,uint32_t y){
         }
 
         glm::vec3 LightDir = glm::normalize(glm::vec3(-1, -1, -1));
-        float lightIntensity =glm::max(glm::dot(payload.WorldNormal,-LightDir),0.1f);
+        float lightIntensity =glm::max(glm::dot(payload.WorldNormal,-LightDir),0.0f);
 
-        const Sphere& sphere = m_ActiveScene->Spheres[(size_t)payload.ObjectIndex];
-        glm::vec3 sphereColor = sphere.Albedo;
+        const Sphere& sphere = m_ActiveScene->Spheres[payload.ObjectIndex];
+        glm::vec3 sphereColor = sphere.Mat.Albedo;
 
         sphereColor *= lightIntensity;
         color += sphereColor * multiplier;
-        multiplier *= 0.7f;
+        multiplier *= 0.5f;
         ray.Origin = payload.WorldPosition + payload.WorldNormal * 0.0001f;
-        ray.Direction = glm::reflect(ray.Direction,payload.WorldNormal);
+        ray.Direction = glm::reflect(ray.Direction,
+                payload.WorldNormal + sphere.Mat.Roughness * Walnut::Random::Vec3(-0.5f,0.5f));
+        //ray.Direction = glm::normalize(payload.WorldNormal + Walnut::Random::InUnitSphere());
     }
 
     return glm::vec4(color,1.0f);
 }
 Renderer::HitPayload Renderer::ClosestHit(const Ray& ray, float hitDistance, int objectIndex){
     Renderer::HitPayload payload;
-    const Sphere& closestSphere = m_ActiveScene->Spheres[static_cast<size_t>(objectIndex)];
+    const Sphere& closestSphere = m_ActiveScene->Spheres[objectIndex];
     payload.HitDistance = hitDistance;
     payload.ObjectIndex = objectIndex;
 	payload.WorldPosition = ray.Origin + ray.Direction * hitDistance;
