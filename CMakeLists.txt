@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 
 project(RayTracingWorkspace)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_compile_options(-fdiagnostics-color=always)
 
@@ -81,6 +81,7 @@ elseif(UNIX)
     set(Libraries
         ${Libraries}
         vulkan
+        tbb
     )
 endif()
 

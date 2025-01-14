@@ -38,4 +38,5 @@ private:
 	uint32_t* m_ImageData = nullptr;
     glm::vec4* m_AccumulationData = nullptr;
     uint32_t m_FrameIndex = 1;//init to 1 so we can divide by it to make an average
+    std::vector<uint32_t> m_ImageHorizontalIter , m_ImageVerticalIter;
 };
