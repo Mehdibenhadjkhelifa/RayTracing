@@ -1,17 +1,18 @@
 #include "Renderer.h"
 #include "Walnut/Random.h"
 #include "glm/geometric.hpp"
+#include <cstddef>
 #include <limits>
 #include <string.h>
 #include <algorithm>
 #include <execution>
 
 namespace Utils {
-	static uint32_t ConvertToRGBA(const glm::vec4& color) {
-		uint8_t r =(uint8_t)(color.r * 255.0f);
-		uint8_t g = (uint8_t)(color.g * 255.0f);
-		uint8_t b = (uint8_t)(color.b * 255.0f);
-		uint8_t a = (uint8_t)(color.a * 255.0f);
+	static uint32_t ConvertToRGBA(const glm::vec4& light) {
+		uint8_t r =(uint8_t)(light.r * 255.0f);
+		uint8_t g = (uint8_t)(light.g * 255.0f);
+		uint8_t b = (uint8_t)(light.b * 255.0f);
+		uint8_t a = (uint8_t)(light.a * 255.0f);
 		uint32_t result = (a << 24) | (b << 16) | (g << 8) | r;
 		return result;
 	}
@@ -49,8 +50,8 @@ void Renderer::Render(const Scene& scene,const Camera& camera) {
             [this](uint32_t y){
                 std::for_each(std::execution::par,m_ImageHorizontalIter.begin(),m_ImageHorizontalIter.end(),
                 [this,y](uint32_t x){
-                glm::vec4 color = PerPixel(x,y);
-                m_AccumulationData[x + y * m_FinalImage->GetWidth()] += color; // we have to make an average out of this so that the image isn't so bright from accumulating
+                glm::vec4 light = PerPixel(x,y);
+                m_AccumulationData[x + y * m_FinalImage->GetWidth()] += light; // we have to make an average out of this so that the image isn't so bright from accumulating
                 glm::vec4 accumulatedColor = m_AccumulationData[x + y * m_FinalImage->GetWidth()];
                 accumulatedColor /= (float)m_FrameIndex;
                 accumulatedColor = glm::clamp(accumulatedColor, glm::vec4(0.0f), glm::vec4(1.0f));
@@ -63,8 +64,8 @@ void Renderer::Render(const Scene& scene,const Camera& camera) {
 #else
 	for (uint32_t y = 0; y < m_FinalImage->GetHeight();y++) {
 		for (uint32_t x = 0; x < m_FinalImage->GetWidth(); x++) {
-			glm::vec4 color = PerPixel(x,y);
-            m_AccumulationData[x + y * m_FinalImage->GetWidth()] += color; // we have to make an average out of this so that the image isn't so bright from accumulating
+			glm::vec4 light = PerPixel(x,y);
+            m_AccumulationData[x + y * m_FinalImage->GetWidth()] += light; // we have to make an average out of this so that the image isn't so bright from accumulating
             glm::vec4 accumulatedColor = m_AccumulationData[x + y * m_FinalImage->GetWidth()];
             accumulatedColor /= (float)m_FrameIndex;
             accumulatedColor = glm::clamp(accumulatedColor, glm::vec4(0.0f), glm::vec4(1.0f));
@@ -110,38 +111,35 @@ glm::vec4 Renderer::PerPixel(uint32_t x,uint32_t y){
     ray.Origin = m_ActiveCamera->GetPosition();
     ray.Direction = m_ActiveCamera->GetRayDirections()[x + y * m_FinalImage->GetWidth()];
 
-    glm::vec3 color(0.0f);
+    glm::vec3 light(0.0f);
     int bounces = 5;
-    float multiplier = 1.0f;
+    glm::vec3 throughput(1.0f);
     for(int i = 0; i < bounces; i++){
         Renderer::HitPayload payload = TraceRay(ray);
         if(payload.HitDistance < 0.0f){
             glm::vec3 skyColor = glm::vec3(0.6f,0.7f,0.9f);
-            color += skyColor * multiplier;
+            //light += skyColor * throughput;
             break;
         }
 
-        glm::vec3 LightDir = glm::normalize(glm::vec3(-1, -1, -1));
-        float lightIntensity =glm::max(glm::dot(payload.WorldNormal,-LightDir),0.0f);
 
-        const Sphere& sphere = m_ActiveScene->Spheres[payload.ObjectIndex];
-        const Material& material = m_ActiveScene->Materials[sphere.MaterialIndex];
-        glm::vec3 sphereColor = material.Albedo;
+        const Sphere& sphere = m_ActiveScene->Spheres[static_cast<size_t>(payload.ObjectIndex)];
+        const Material& material = m_ActiveScene->Materials[static_cast<size_t>(sphere.MaterialIndex)];
 
-        sphereColor *= lightIntensity;
-        color += sphereColor * multiplier;
-        multiplier *= 0.5f;
+        throughput *= material.Albedo;
+        light += material.GetEmission() ;
         ray.Origin = payload.WorldPosition + payload.WorldNormal * 0.0001f;
-        ray.Direction = glm::reflect(ray.Direction,
-                payload.WorldNormal + material.Roughness * Walnut::Random::Vec3(-0.5f,0.5f));
+        //ray.Direction = glm::reflect(ray.Direction,
+         //       payload.WorldNormal + material.Roughness * Walnut::Random::Vec3(-0.5f,0.5f));
         //ray.Direction = glm::normalize(payload.WorldNormal + Walnut::Random::InUnitSphere());
+        ray.Direction = glm::normalize(payload.WorldNormal + Walnut::Random::InUnitSphere());
     }
 
-    return glm::vec4(color,1.0f);
+    return glm::vec4(light,1.0f);
 }
 Renderer::HitPayload Renderer::ClosestHit(const Ray& ray, float hitDistance, int objectIndex){
     Renderer::HitPayload payload;
-    const Sphere& closestSphere = m_ActiveScene->Spheres[objectIndex];
+    const Sphere& closestSphere = m_ActiveScene->Spheres[static_cast<size_t>(objectIndex)];
     payload.HitDistance = hitDistance;
     payload.ObjectIndex = objectIndex;
 	payload.WorldPosition = ray.Origin + ray.Direction * hitDistance;
