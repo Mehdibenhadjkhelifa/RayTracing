@@ -7,7 +7,7 @@ optimization and rendering knowledge.
 
 **PROJECT_STATUS** : *WIP*. Still lacks some features for future development.
 ## Dependencies
-#### 1- [Walnut](https://github.com/StudioCherno/Walnut) by StudioCherno
+#### 1- [Walnut](https://github.com/Mehdibenhadjkhelifa/Walnut/tree/5c76e1d8bf6db838153603e7e4817fe84d72a855) by StudioCherno extended by me
 #### 2- [Imgui](https://github.com/ocornut/imgui) by ocornut
 #### 3- [GLFW](https://github.com/glfw/glfw) 
 #### 4- [glm](https://github.com/g-truc/glm) by g-truc
