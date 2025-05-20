@@ -61,6 +61,8 @@ if(WIN32)
         ${Libraries}
         vulkan-1
     )
+#Set startup project
+set_directory_properties(PROPERTIES VS_STARTUP_PROJECT RayTracing)
 elseif(UNIX)
 #Set Vulkan SDK for linux
     if(DEFINED ENV{VULKAN_SDK})
