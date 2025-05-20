@@ -11,6 +11,8 @@ optimization and rendering knowledge.
 #### 2- [Imgui](https://github.com/ocornut/imgui) by ocornut
 #### 3- [GLFW](https://github.com/glfw/glfw) 
 #### 4- [glm](https://github.com/g-truc/glm) by g-truc
+#### 5- [vulkan](https://www.lunarg.com/vulkan-sdk/)
+#### 6- stb_image
 ## Features
 #### - Lighting and Shading
 #### - Interactive 3D camera system
